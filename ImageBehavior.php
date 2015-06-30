@@ -3,6 +3,7 @@
 namespace mervick\adminlte\behaviors;
 
 use Yii;
+use yii\base\ErrorException;
 use yii\base\Event;
 use yii\db\BaseActiveRecord;
 use yii\base\Behavior;
@@ -65,25 +66,51 @@ class ImageBehavior extends Behavior
     }
 
     /**
-     * Upload images.
-     * @param array $changedAttributes
-     * @throws \yii\base\ErrorException
+     * Generate filename of new uploaded image.
+     * @param $id
+     * @param $format
+     * @return string
      */
-    protected function uploadImages($changedAttributes = [])
+    protected function generateRandomName($id, $format)
     {
-        if (!empty($_FILES)) {
-            $imageAttributes = array_diff(['avatar'], $changedAttributes);
-            if (!empty($imageAttributes)) {
+        return $id . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12)) . '.' . strtolower($format);
+    }
+
+    /**
+     * Upload the images.
+     * @throws ErrorException
+     */
+    protected function uploadImages()
+    {
+        $attributes = array_keys($this->attributes);
+
+        if (!empty($attributes))
+        {
+            $modelName = array_reverse(explode('\\', $this->owner->className()))[0];
+
+            if (!empty($_FILES[$modelName]['tmp_name']))
+            {
                 $save = false;
-                $modelName = array_reverse(explode('\\', self::className()))[0];
-                foreach ($imageAttributes as $attribute) {
-                    if (!empty($_FILES[$modelName]['tmp_name'][$attribute])) {
-                        $upload_dir = Yii::getAlias($this->{"{$attribute}_upload_dir"});
-                        $filename = $this->id . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12)) . '.jpg';
+                $files = $_FILES[$modelName]['tmp_name'];
+
+                if (!$this->owner->hasMethod('getPrimaryKey', false)) {
+                    throw new ErrorException(
+                        sprintf('Cannot get primary key of class %s', $this->owner->className()));
+                }
+
+                /** @var int $primaryKey */
+                $primaryKey = call_user_func([$this->owner, 'getPrimaryKey']);
+                $upload_dir = Yii::getAlias($this->upload_dir, true);
+
+                foreach ($attributes as $attribute)
+                {
+                    if (!empty($files[$attribute]))
+                    {
+                        $filename = $this->owner->ge . '-' .  . '.jpg';
                         $old_filename = $this->$attribute;
                         $save = true;
                         foreach ($this->{"{$attribute}_sizes"} as $size) {
-                            /* @var $im \mervick\image\Component */
+                            /** @var $im \mervick\image\Component */
                             $im = Yii::$app->image;
                             if ($image = $im->load($_FILES[$modelName]['tmp_name'][$attribute])) {
                                 $sizes = explode('x', $size);
@@ -105,6 +132,7 @@ class ImageBehavior extends Behavior
                         unset($_FILES[$modelName]['tmp_name'][$attribute]);
                     }
                 }
+
                 if ($save) {
                     $this->save(false);
                 }
@@ -118,7 +146,7 @@ class ImageBehavior extends Behavior
      * @param string|null $size
      * @return int|string
      */
-    protected function getSizeIndex($attribute, $size)
+    protected function sizeIndex($attribute, $size)
     {
         $sizes = $this->attributes[$attribute];
 
@@ -147,6 +175,12 @@ class ImageBehavior extends Behavior
         return $keys[0];
     }
 
+    protected function schemaTo($path, $attribute, $size)
+    {
+        return str_replace(['{$path}', '{$attribute}', '{$size}'],
+            [rtrim($path, '/'), $attribute, $size], $this->schema);
+    }
+
     /**
      * @param $attribute
      * @param $size
@@ -154,14 +188,14 @@ class ImageBehavior extends Behavior
      */
     protected function imageUrl($attribute, $size)
     {
-        if (is_array($this->attributes[$attribute])) {
-            $size = $this->getSizeIndex($attribute, $size);
-            $host = rtrim(preg_replace('~^((?:https?\:)?//)(.*)$~',
+        if (is_array($this->attributes[$attribute]))
+        {
+            $size = $this->sizeIndex($attribute, $size);
+            $host = preg_replace('~^((?:https?\:)?//)(.*)$~',
                 '\\1' . str_replace('{$domain}', '\\2', $this->domain),
-                Yii::$app->urlManager->hostInfo), '/');
+                Yii::$app->urlManager->hostInfo);
 
-            return str_replace(['{$path}', '{$attribute}', '{$size}'],
-                [$host, $attribute, $this->attributes[$attribute][$size]], $this->schema);
+            return $this->schemaTo($host, $attribute, $this->attributes[$attribute][$size]);
         }
 
         throw new UnknownMethodException(
