@@ -91,7 +91,7 @@ class ImageBehavior extends Behavior
             if (!empty($_FILES[$modelName]['tmp_name']))
             {
                 $save = false;
-                $files = $_FILES[$modelName]['tmp_name'];
+                $files = &$_FILES[$modelName]['tmp_name'];
 
                 if (!$this->owner->hasMethod('getPrimaryKey', false)) {
                     throw new ErrorException(
@@ -106,6 +106,7 @@ class ImageBehavior extends Behavior
                 {
                     if (!empty($files[$attribute]))
                     {
+                        $save = true;
                         $settings = array_merge($this->defaultImagesSettings, $settings);
                         $filename = $this->generateRandomName($primaryKey, $settings['format']);
 
@@ -115,7 +116,7 @@ class ImageBehavior extends Behavior
                         }
 
                         $old_filename = $this->$attribute;
-                        $save = true;
+
                         foreach ($this->{"{$attribute}_sizes"} as $size) {
                             /** @var $im \mervick\image\Component */
                             $im = Yii::$app->image;
@@ -155,7 +156,7 @@ class ImageBehavior extends Behavior
      */
     protected function sizeIndex($attribute, $size)
     {
-        $sizes = $this->attributes[$attribute];
+        $sizes = $this->attributes[$attribute]['sizes'];
 
         if (isset($sizes[$size])) {
             return $size;
