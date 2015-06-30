@@ -102,11 +102,18 @@ class ImageBehavior extends Behavior
                 $primaryKey = call_user_func([$this->owner, 'getPrimaryKey']);
                 $upload_dir = Yii::getAlias($this->upload_dir, true);
 
-                foreach ($attributes as $attribute)
+                foreach ($attributes as $attribute => $settings)
                 {
                     if (!empty($files[$attribute]))
                     {
-                        $filename = $this->owner->ge . '-' .  . '.jpg';
+                        $settings = array_merge($this->defaultImagesSettings, $settings);
+                        $filename = $this->generateRandomName($primaryKey, $settings['format']);
+
+                        if (!$this->owner->canGetProperty($attribute, false)) {
+                            throw new ErrorException(
+                                sprintf('Cannot get attribute %s of class %s', $attribute, $this->owner->className()));
+                        }
+
                         $old_filename = $this->$attribute;
                         $save = true;
                         foreach ($this->{"{$attribute}_sizes"} as $size) {
