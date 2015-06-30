@@ -122,33 +122,43 @@ class ImageBehavior extends Behavior
 
                         $old_filename = $this->owner->$attribute;
 
-                        foreach ($settings['sizes'] as $size)
+                        foreach ($settings['sizes'] as $options)
                         {
+                            if (is_array($options)) {
+                                $options = array_merge($settings, $options);
+                            } else {
+                                $options = array_merge($settings, ['size' => $options]);
+                            }
+
                             if ($image = Image::load($files[$attribute], $this->imageDriver))
                             {
-                                $path = $this->schemaTo($upload_dir, $attribute, $size);
-                                $sizes = explode('x', strtolower($size));
+                                $path = $this->schemaTo($upload_dir, $attribute, $options['size']);
+                                $sizes = explode('x', $options['size']);
 
                                 if (!is_dir($path)) {
                                     @mkdir($path, 0744, true);
                                 }
+
                                 if (!empty($old_filename)) {
                                     @unlink("$path/$old_filename");
                                 }
-                                $image->resize($sizes[0], $sizes[1], 'crop')->background('#fff');
-                                if ($image->save("$path/$filename", 85)) {
-                                    $this->$attribute = $filename;
+
+                                $image->resize($sizes[0], $sizes[1], $options['master'])->background($options['background']);
+
+                                if ($image->save("$path/$filename", $options['quality'])) {
+                                    $this->owner->$attribute = $filename;
                                 } else {
-                                    $this->$attribute = '';
+                                    $this->owner->$attribute = '';
                                 }
                             }
                         }
-                        unset($_FILES[$modelName]['tmp_name'][$attribute]);
+
+                        unset($files[$attribute]);
                     }
                 }
 
                 if ($save) {
-                    $this->save(false);
+                    $this->owner->save(false);
                 }
             }
         }
