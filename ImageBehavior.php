@@ -22,6 +22,11 @@ class ImageBehavior extends Behavior
     /**
      * @var string
      */
+    public $imageDriver = 'mervick\\image\\drivers\\GD';
+
+    /**
+     * @var string
+     */
     public $domain;
 
     /**
@@ -115,16 +120,17 @@ class ImageBehavior extends Behavior
                                 sprintf('Cannot get attribute %s of class %s', $attribute, $this->owner->className()));
                         }
 
-                        $old_filename = $this->$attribute;
+                        $old_filename = $this->owner->$attribute;
 
-                        foreach ($this->{"{$attribute}_sizes"} as $size) {
-                            /** @var $im \mervick\image\Component */
-                            $im = Yii::$app->image;
-                            if ($image = $im->load($_FILES[$modelName]['tmp_name'][$attribute])) {
-                                $sizes = explode('x', $size);
-                                $path = "$upload_dir/$size";
+                        foreach ($settings['sizes'] as $size)
+                        {
+                            if ($image = Image::load($files[$attribute], $this->imageDriver))
+                            {
+                                $path = $this->schemaTo($upload_dir, $attribute, $size);
+                                $sizes = explode('x', strtolower($size));
+
                                 if (!is_dir($path)) {
-                                    @mkdir($path, 0777, true);
+                                    @mkdir($path, 0744, true);
                                 }
                                 if (!empty($old_filename)) {
                                     @unlink("$path/$old_filename");
