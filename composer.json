@@ -1,6 +1,9 @@
 {
     "name": "mervick/yii2-adminlte-behaviors",
     "type": "yii2-extension",
+    "description": "Yii2 AdminLTE Behaviors",
+    "keywords": ["yii", "yii2", "extension", "behavior", "adminlte"],
+    "homepage": "https://github.com/mervick/yii2-adminlte-behaviors",
     "license": "BSD-3-Clause",
     "authors": [
         {
