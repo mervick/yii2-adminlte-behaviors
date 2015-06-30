@@ -1,0 +1,21 @@
+{
+    "name": "mervick/yii2-adminlte-behaviors",
+    "type": "yii2-extension",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Andrey Izman",
+            "email": "izman.dev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "yiisoft/yii2": "*",
+        "mervick/yii2-image": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "mervick\\adminlte\\behaviors\\": ""
+        }
+    }
+}
