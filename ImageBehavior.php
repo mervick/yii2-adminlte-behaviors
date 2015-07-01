@@ -121,7 +121,7 @@ class ImageBehavior extends Behavior
                                 }
 
                                 if ($options['size'] !== 'original') {
-                                    $info = explode('x', $options['size']);
+                                    $info = explode('x', strtolower($options['size']));
                                     $width = empty($info[0]) ? null: $info[0];
                                     $height = empty($info[1]) ? null: $info[1];
                                     $image->resize($width, $height, $options['master'])
