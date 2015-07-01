@@ -73,12 +73,11 @@ class ImageBehavior extends Behavior
     /**
      * Generate filename of new uploaded image.
      * @param $id
-     * @param $format
      * @return string
      */
-    protected function generateRandomName($id, $format)
+    protected function generateRandomName($id)
     {
-        return $id . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12)) . '.' . strtolower($format);
+        return $id . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12));
     }
 
     /**
@@ -113,14 +112,12 @@ class ImageBehavior extends Behavior
                     {
                         $save = true;
                         $settings = array_merge($this->defaultImagesSettings, $settings);
-                        $filename = $this->generateRandomName($primaryKey, $settings['format']);
+                        $filename = $this->generateRandomName($primaryKey);
 
                         if (!$this->owner->canGetProperty($attribute, false)) {
                             throw new ErrorException(
                                 sprintf('Cannot get attribute %s of class %s', $attribute, $this->owner->className()));
                         }
-
-                        $old_filename = $this->owner->$attribute;
 
                         foreach ($settings['sizes'] as $options)
                         {
@@ -133,19 +130,21 @@ class ImageBehavior extends Behavior
                             if ($image = Image::load($files[$attribute], $this->imageDriver))
                             {
                                 $path = $this->schemaTo($upload_dir, $attribute, $options['size']);
-                                $sizes = explode('x', $options['size']);
 
                                 if (!is_dir($path)) {
                                     @mkdir($path, 0744, true);
                                 }
 
-                                if (!empty($old_filename)) {
-                                    @unlink("$path/$old_filename");
+                                if (!empty($this->owner->$attribute)) {
+                                    @unlink("$path/{$this->owner->$attribute}.{$options['format']}");
                                 }
 
-                                $image->resize($sizes[0], $sizes[1], $options['master'])->background($options['background']);
+                                if ($options['size'] !== 'original') {
+                                    $sizes = array_merge([null, null], explode('x', $options['size']));
+                                    $image->resize($sizes[0], $sizes[1], $options['master'])->background($options['background']);
+                                }
 
-                                if ($image->save("$path/$filename", $options['quality'])) {
+                                if ($image->save("$path/$filename.{$options['format']}", $options['quality'])) {
                                     $this->owner->$attribute = $filename;
                                 } else {
                                     $this->owner->$attribute = '';
