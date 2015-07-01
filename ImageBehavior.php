@@ -8,8 +8,6 @@ use yii\base\Event;
 use yii\db\BaseActiveRecord;
 use yii\base\Behavior;
 use yii\base\UnknownMethodException;
-use yii\base\InvalidConfigException;
-use yii\helpers\ArrayHelper;
 use mervick\image\Image;
 
 
