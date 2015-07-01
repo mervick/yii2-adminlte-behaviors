@@ -196,8 +196,9 @@ class ImageBehavior extends Behavior
      */
     protected function schemaTo($path, $attribute, $size)
     {
-        return str_replace(['{$path}', '{$attribute}', '{$size}'],
-            [rtrim($path, '/'), $attribute, $size], $this->schema);
+        return str_replace(['{$path}', '{$model}', '{$attribute}', '{$size}'],
+            [rtrim($path, '/'), array_reverse(explode('\\', $this->owner->className()))[0], $attribute, $size],
+            $this->schema);
     }
 
     /**
