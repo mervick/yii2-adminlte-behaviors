@@ -64,7 +64,7 @@ class ImageBehavior extends Behavior
         if (empty($this->attributes) && is_array($this->attributes)) {
             return [
                 BaseActiveRecord::EVENT_BEFORE_INSERT => 'uploadImages',
-                BaseActiveRecord::EVENT_BEFORE_UPDATE => 'uploadImages',
+                BaseActiveRecord::EVENT_AFTER_UPDATE => 'uploadImages',
             ];
         }
         return [];
@@ -72,9 +72,10 @@ class ImageBehavior extends Behavior
 
     /**
      * Upload the images.
+     * @param Event $event
      * @throws ErrorException
      */
-    protected function uploadImages()
+    protected function uploadImages($event)
     {
         $attributes = array_keys($this->attributes);
 
@@ -147,7 +148,7 @@ class ImageBehavior extends Behavior
                     }
                 }
 
-                if ($save) {
+                if ($save && $event->name === BaseActiveRecord::EVENT_AFTER_UPDATE) {
                     $this->owner->save(false);
                 }
             }
