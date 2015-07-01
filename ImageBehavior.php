@@ -51,6 +51,7 @@ class ImageBehavior extends Behavior
     protected $defaultImagesSettings = [
         'format' => 'jpg',
         'quality' => 85,
+        'size' => 'original',
         'master' => 'adapt',
         'background' => '#fff',
     ];
@@ -91,17 +92,12 @@ class ImageBehavior extends Behavior
                 /** @var int $primaryKey */
                 $primaryKey = call_user_func([$this->owner, 'getPrimaryKey']);
                 $upload_dir = Yii::getAlias($this->upload_dir, true);
-                \ChromePhp::log($upload_dir);
 
                 foreach ($this->attributes as $attribute => $settings)
                 {
-                    \ChromePhp::log($attribute);
-                    \ChromePhp::log(empty($files[$attribute]));
                     if (!empty($files[$attribute]))
                     {
                         $save = true;
-                        \ChromePhp::log($save);
-
                         $settings = array_merge($this->defaultImagesSettings, $settings);
                         $filename = $primaryKey . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12));
 
@@ -121,15 +117,17 @@ class ImageBehavior extends Behavior
                             if ($image = Image::load($files[$attribute], $this->imageDriver))
                             {
                                 $path = $this->schemaTo($upload_dir, $attribute, $name);
-                                \ChromePhp::log($path);
 
                                 if (!empty($this->owner->$attribute)) {
                                     @unlink("$path/{$this->owner->$attribute}.{$options['format']}");
                                 }
 
                                 if ($options['size'] !== 'original') {
-                                    $sizes = array_merge([null, null], explode('x', $options['size']));
-                                    $image->resize($sizes[0], $sizes[1], $options['master'])->background($options['background']);
+                                    $info = explode('x', $options['size']);
+                                    $width = empty($info[0]) ? null: $info[0];
+                                    $height = empty($info[1]) ? null: $info[1];
+                                    $image->resize($width, $height, $options['master'])
+                                        ->background($options['background']);
                                 }
 
                                 if ($image->save("$path/$filename.{$options['format']}", $options['quality'])) {
