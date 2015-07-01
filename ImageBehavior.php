@@ -190,6 +190,12 @@ class ImageBehavior extends Behavior
         return $keys[0];
     }
 
+    /**
+     * @param string $path
+     * @param string $attribute
+     * @param string $size
+     * @return string
+     */
     protected function schemaTo($path, $attribute, $size)
     {
         return str_replace(['{$path}', '{$attribute}', '{$size}'],
@@ -226,7 +232,7 @@ class ImageBehavior extends Behavior
 
     /**
      * @param null $size
-     * @return string
+     * @return string|null
      */
     public function getImgUrl($size = null)
     {
@@ -235,7 +241,7 @@ class ImageBehavior extends Behavior
 
     /**
      * @param null $size
-     * @return string
+     * @return string|null
      */
     public function getImageUrl($size = null)
     {
@@ -244,7 +250,7 @@ class ImageBehavior extends Behavior
 
     /**
      * @param null $size
-     * @return string
+     * @return string|null
      */
     public function getLogoUrl($size = null)
     {
@@ -253,7 +259,7 @@ class ImageBehavior extends Behavior
 
     /**
      * @param null $size
-     * @return string
+     * @return string|null
      */
     public function getAvatarUrl($size = null)
     {
@@ -262,7 +268,7 @@ class ImageBehavior extends Behavior
 
     /**
      * @param null $size
-     * @return string
+     * @return string|null
      */
     public function getPictureUrl($size = null)
     {
