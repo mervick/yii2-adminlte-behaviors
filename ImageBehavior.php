@@ -61,13 +61,10 @@ class ImageBehavior extends Behavior
      */
     public function events()
     {
-        if (empty($this->attributes) && is_array($this->attributes)) {
-            return [
-                BaseActiveRecord::EVENT_BEFORE_INSERT => 'uploadImages',
-                BaseActiveRecord::EVENT_AFTER_UPDATE => 'uploadImages',
-            ];
-        }
-        return [];
+        return [
+            BaseActiveRecord::EVENT_BEFORE_INSERT => 'uploadImages',
+            BaseActiveRecord::EVENT_AFTER_UPDATE => 'uploadImages',
+        ];
     }
 
     /**
@@ -75,11 +72,9 @@ class ImageBehavior extends Behavior
      * @param Event $event
      * @throws ErrorException
      */
-    protected function uploadImages($event)
+    public function uploadImages($event)
     {
-        $attributes = array_keys($this->attributes);
-
-        if (!empty($attributes))
+        if (!empty($this->attributes))
         {
             $modelName = array_reverse(explode('\\', $this->owner->className()))[0];
 
@@ -96,22 +91,26 @@ class ImageBehavior extends Behavior
                 /** @var int $primaryKey */
                 $primaryKey = call_user_func([$this->owner, 'getPrimaryKey']);
                 $upload_dir = Yii::getAlias($this->upload_dir, true);
+                \ChromePhp::log($upload_dir);
 
-                foreach ($attributes as $attribute => $settings)
+                foreach ($this->attributes as $attribute => $settings)
                 {
+                    \ChromePhp::log($attribute);
+                    \ChromePhp::log(empty($files[$attribute]));
                     if (!empty($files[$attribute]))
                     {
                         $save = true;
+                        \ChromePhp::log($save);
 
                         $settings = array_merge($this->defaultImagesSettings, $settings);
                         $filename = $primaryKey . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12));
 
-                        if (!$this->owner->canGetProperty($attribute, false)) {
+                        if (!in_array($attribute, $this->owner->attributes())) {
                             throw new ErrorException(
                                 sprintf('Cannot get attribute %s of class %s', $attribute, $this->owner->className()));
                         }
 
-                        foreach ($settings['sizes'] as $options)
+                        foreach ($settings['sizes'] as $name => $options)
                         {
                             if (is_array($options)) {
                                 $options = array_merge($settings, $options);
@@ -121,11 +120,8 @@ class ImageBehavior extends Behavior
 
                             if ($image = Image::load($files[$attribute], $this->imageDriver))
                             {
-                                $path = $this->schemaTo($upload_dir, $attribute, $options['size']);
-
-                                if (!is_dir($path)) {
-                                    @mkdir($path, 0744, true);
-                                }
+                                $path = $this->schemaTo($upload_dir, $attribute, $name);
+                                \ChromePhp::log($path);
 
                                 if (!empty($this->owner->$attribute)) {
                                     @unlink("$path/{$this->owner->$attribute}.{$options['format']}");
@@ -223,8 +219,7 @@ class ImageBehavior extends Behavior
             $format = array_merge($this->defaultImagesSettings, $this->attributes[$attribute],
                 $this->attributes[$attribute]['sizes'][$size])['format'];
 
-            return $this->schemaTo($host, $attribute, $this->attributes[$attribute]['sizes'][$size]['size']) .
-                "/{$this->owner->$attribute}.$format";
+            return $this->schemaTo($host, $attribute, "$size/{$this->owner->$attribute}.$format");
         }
 
         throw new UnknownMethodException(
