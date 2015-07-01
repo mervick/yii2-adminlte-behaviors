@@ -25,22 +25,22 @@ class ImageBehavior extends Behavior
     /**
      * @var string
      */
-    public $domain;
+    public $domain = 'img.{$domain}';
 
     /**
      * @var string
      */
-    public $upload_dir;
+    public $upload_dir = '@images';
 
     /**
      * @var string
      */
-    public $schema;
+    public $schema = '{$path}/{$model}/{$attribute}/{$size}';
 
     /**
      * @var array
      */
-    public $attributes;
+    public $attributes = [];
 
     /**
      * Default images settings
