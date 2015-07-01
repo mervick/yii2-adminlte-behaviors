@@ -71,16 +71,6 @@ class ImageBehavior extends Behavior
     }
 
     /**
-     * Generate filename of new uploaded image.
-     * @param $id
-     * @return string
-     */
-    protected function generateRandomName($id)
-    {
-        return $id . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12));
-    }
-
-    /**
      * Upload the images.
      * @throws ErrorException
      */
@@ -111,8 +101,9 @@ class ImageBehavior extends Behavior
                     if (!empty($files[$attribute]))
                     {
                         $save = true;
+
                         $settings = array_merge($this->defaultImagesSettings, $settings);
-                        $filename = $this->generateRandomName($primaryKey);
+                        $filename = $primaryKey . '-' . Yii::$app->security->generateRandomString(mt_rand(5, 12));
 
                         if (!$this->owner->canGetProperty($attribute, false)) {
                             throw new ErrorException(
@@ -176,21 +167,27 @@ class ImageBehavior extends Behavior
         if (isset($sizes[$size])) {
             return $size;
         }
+
         if (($count = count($sizes)) === 1) {
             return array_keys($sizes)[0];
         }
+
         if (empty($size)) {
             return !isset($sizes['default']) ? !isset($sizes['normal']) ? array_keys($sizes)[0]  : 'normal' : 'default';
         }
+
         foreach ($sizes as $key => $arr) {
-            if ($arr['size'] === $size) {
+            if ($arr === $size || $arr['size'] === $size) {
                 return $key;
             }
         }
+
         $keys = array_keys($sizes);
+
         if (in_array($size, ['big', 'large'])) {
             return $keys[$count-1];
         }
+
         if (in_array($size, ['medium', 'normal'])) {
             return $keys[floor($count/2) - 1];
         }
@@ -207,18 +204,26 @@ class ImageBehavior extends Behavior
     /**
      * @param $attribute
      * @param $size
-     * @return string
+     * @return string|null
      */
     protected function imageUrl($attribute, $size)
     {
-        if (is_array($this->attributes[$attribute]))
+        if ($this->owner->canGetProperty($attribute) && is_array($this->attributes[$attribute]))
         {
+            if (empty($this->owner->$attribute)) {
+                return null;
+            }
+
             $size = $this->sizeIndex($attribute, $size);
             $host = preg_replace('~^((?:https?\:)?//)(.*)$~',
                 '\\1' . str_replace('{$domain}', '\\2', $this->domain),
                 Yii::$app->urlManager->hostInfo);
 
-            return $this->schemaTo($host, $attribute, $this->attributes[$attribute][$size]);
+            $format = array_merge($this->defaultImagesSettings, $this->attributes[$attribute],
+                $this->attributes[$attribute]['sizes'][$size])['format'];
+
+            return $this->schemaTo($host, $attribute, $this->attributes[$attribute][$size]) .
+                "/{$this->owner->$attribute}.$format";
         }
 
         throw new UnknownMethodException(
