@@ -209,7 +209,7 @@ class ImageBehavior extends Behavior
      */
     protected function imageUrl($attribute, $size)
     {
-        if ($this->owner->canGetProperty($attribute) && is_array($this->attributes[$attribute]))
+        if (in_array($attribute, $this->owner->attributes()) && is_array($this->attributes[$attribute]))
         {
             if (empty($this->owner->$attribute)) {
                 return null;
@@ -223,7 +223,7 @@ class ImageBehavior extends Behavior
             $format = array_merge($this->defaultImagesSettings, $this->attributes[$attribute],
                 $this->attributes[$attribute]['sizes'][$size])['format'];
 
-            return $this->schemaTo($host, $attribute, $this->attributes[$attribute][$size]) .
+            return $this->schemaTo($host, $attribute, $this->attributes[$attribute]['sizes'][$size]['size']) .
                 "/{$this->owner->$attribute}.$format";
         }
 
