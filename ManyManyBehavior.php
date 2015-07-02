@@ -94,8 +94,6 @@ class ManyManyBehavior extends Behavior
         }
     }
 
-
-
     /**
      * @inheritdoc
      */
