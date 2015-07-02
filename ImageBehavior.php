@@ -293,7 +293,7 @@ class ImageBehavior extends Behavior
         if ($attribute && is_array($this->attributes[$attribute])) {
             return $this->imageUrl($attribute);
         } else {
-            parent::__get($name);
+            return parent::__get($name);
         }
     }
 }
