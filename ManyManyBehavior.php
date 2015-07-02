@@ -3,9 +3,9 @@
 namespace mervick\adminlte\behaviors;
 
 use Yii;
-use yii\base\Event;
-use yii\db\BaseActiveRecord;
 use yii\base\Behavior;
+use yii\db\BaseActiveRecord;
+
 
 /**
  * Class ManyManyBehavior
@@ -18,22 +18,45 @@ class ManyManyBehavior extends Behavior
      */
     public $attributes;
 
-    private $_set = [];
+    /**
+     * @var array
+     */
+    protected $_set = [];
 
 
     /**
      * @inheritdoc
      */
-    public function init()
+    public function events()
     {
-        parent::init();
+        return [
+            BaseActiveRecord::EVENT_BEFORE_UPDATE => 'beforeUpdateModel',
+            BaseActiveRecord::EVENT_AFTER_INSERT => 'afterSaveModel',
+            BaseActiveRecord::EVENT_AFTER_UPDATE => 'afterSaveModel',
+        ];
+    }
 
-        if (empty($this->attributes)) {
-            $this->attributes = [
-                BaseActiveRecord::EVENT_BEFORE_INSERT => [$this->createdByAttribute, $this->updatedByAttribute],
-                BaseActiveRecord::EVENT_BEFORE_UPDATE => $this->updatedByAttribute,
-            ];
+    /**
+     * @param Event $event
+     */
+    public function beforeUpdateModel($event)
+    {
+        foreach ($this->attributes as $attribute => $relation) {
+            if (!is_null($this->_set[$attribute])) {
+
+                // Model::deleteAll('id_fk = :id_key', [':id_fk' => $this->owner->id_key]);
+                call_user_func([$relation['class'], 'deleteAll'],
+                    "{$relation['fk']} = :key", [':key' => $this->owner->{$relation['key']}]);
+            }
         }
+    }
+
+    /**
+     * @param Event $event
+     */
+    public function afterSaveModel($event)
+    {
+
     }
 
     /**
@@ -54,12 +77,12 @@ class ManyManyBehavior extends Behavior
     {
         if (is_array($this->_set[$attribute])) {
             foreach ($this->_set[$attribute] as $id) {
-                if (intval($id) != $id) {
+                if (!ctype_digit(strval($id))) {
                     $this->addError($attribute, sprintf('Items of %s must be integers.', $this->label($attribute)));
                     break;
                 }
             }
-        } elseif (!empty($this->_idChannels)) {
+        } elseif (!empty($this->_set[$attribute])) {
             $this->addError($attribute, sprintf('%s must be an array.', $this->label($attribute)));
         }
     }
