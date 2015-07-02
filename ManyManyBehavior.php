@@ -44,7 +44,7 @@ class ManyManyBehavior extends Behavior
         foreach ($this->_set as $attribute) {
             $relation = $this->relations[$attribute];
             call_user_func([$relation['class'], 'deleteAll'],
-                "{$relation['fk']} = :key", [':key' => $this->owner->{$relation['key']}]);
+                "{$relation['refs'][1]} = :key", [':key' => $this->owner->{$relation['refs'][0]}]);
         }
     }
 
@@ -58,8 +58,8 @@ class ManyManyBehavior extends Behavior
                 $relation = $this->relations[$attribute];
                 foreach ($keys as $id) {
                     $model = Yii::createObject($relation['class']);
-                    $model->{$relation['fk']} = $this->owner->{$relation['key']};
-                    $model->{$relation['many_fk']}  = $id;
+                    $model->{$relation['refs'][1]} = $this->owner->{$relation['refs'][0]};
+                    $model->{$relation['refs'][2]}  = $id;
                     $model->save();
                 }
             }
