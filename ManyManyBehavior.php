@@ -16,7 +16,7 @@ class ManyManyBehavior extends Behavior
     /**
      * @var array
      */
-    public $relations;
+    public $relations = [];
 
     /**
      * @var array
@@ -41,7 +41,7 @@ class ManyManyBehavior extends Behavior
      */
     public function beforeUpdateModel($event)
     {
-        foreach ($this->_set as $attribute) {
+        foreach ($this->_set as $attribute => $keys) {
             $relation = $this->relations[$attribute];
             call_user_func([$relation['class'], 'deleteAll'],
                 "{$relation['refs'][1]} = :key", [':key' => $this->owner->{$relation['refs'][0]}]);
@@ -63,6 +63,7 @@ class ManyManyBehavior extends Behavior
                     $model->save();
                 }
             }
+            unset($this->_set[$attribute]);
         }
     }
 
@@ -111,7 +112,7 @@ class ManyManyBehavior extends Behavior
             $this->_set[$name] = [];
             if (!empty($value)) {
                 foreach ($value as $id) {
-                    $this->_set[] = $id;
+                    $this->_set[$name][] = $id;
                 }
             }
         } else {
