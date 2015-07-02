@@ -20,7 +20,7 @@ class ImageBehavior extends Behavior
     /**
      * @var string
      */
-    public $imageDriver = 'mervick\\image\\drivers\\GD';
+    public $imageDriver = 'mervick\\image\\drivers\\Imagick';
 
     /**
      * @var string
