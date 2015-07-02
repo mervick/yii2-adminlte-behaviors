@@ -202,11 +202,12 @@ class ImageBehavior extends Behavior
     }
 
     /**
-     * @param $attribute
-     * @param $size
+     * Get image url for attribute with custom size
+     * @param string $attribute
+     * @param string $size
      * @return string|null
      */
-    protected function imageUrl($attribute, $size)
+    protected function imageUrl($attribute, $size = null)
     {
         if (in_array($attribute, $this->owner->attributes()) && is_array($this->attributes[$attribute]))
         {
@@ -230,48 +231,69 @@ class ImageBehavior extends Behavior
     }
 
     /**
-     * @param null $size
-     * @return string|null
+     * Get attribute from method `get{$Attribute}Url`
+     * @param string $name
+     * @return null|string
      */
-    public function getImgUrl($size = null)
+    private function attributeFromGetMethodUrl($name)
     {
-        return $this->imageUrl('img', $size);
+        return $this->attributeFromPropertyUrl(($pos = strpos($name, 'get')) === 0 ? lcfirst(substr($name, 3)) : null);
     }
 
     /**
-     * @param null $size
-     * @return string|null
+     * Get attribute from property `{$attribute}Url`
+     * @param string $name
+     * @return null|string
      */
-    public function getImageUrl($size = null)
+    private function attributeFromPropertyUrl($name)
     {
-        return $this->imageUrl('image', $size);
+        return ($len = strlen($name)) > 3 && ($pos = strpos($name, 'Url', $len - 3)) !== false ? substr($name, 0, -3) : null;
     }
 
     /**
-     * @param null $size
-     * @return string|null
+     * @inheritdoc
      */
-    public function getLogoUrl($size = null)
+    public function hasMethod($name)
     {
-        return $this->imageUrl('logo', $size);
+        $attribute = $this->attributeFromGetMethodUrl($name);
+        return ($attribute && is_array($this->attributes[$attribute])) || parent::hasMethod($name);
     }
 
     /**
-     * @param null $size
-     * @return string|null
+     * @inheritdoc
      */
-    public function getAvatarUrl($size = null)
+    public function __call($name, $params)
     {
-        return $this->imageUrl('avatar', $size);
+        $attribute = $this->attributeFromGetMethodUrl($name);
+
+        if ($attribute && is_array($this->attributes[$attribute])) {
+            array_unshift($params, $attribute);
+            return call_user_func_array([$this, 'imageUrl'], $params);
+        } else {
+            return parent::__call($name, $params);
+        }
     }
 
     /**
-     * @param null $size
-     * @return string|null
+     * @inheritdoc
      */
-    public function getPictureUrl($size = null)
+    public function canGetProperty($name, $checkVars = true)
     {
-        return $this->imageUrl('picture', $size);
+        $attribute = $this->attributeFromPropertyUrl($name);
+        return ($attribute && is_array($this->attributes[$attribute])) || parent::canGetProperty($name, $checkVars);
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function __get($name)
+    {
+        $attribute = $this->attributeFromPropertyUrl($name);
+
+        if ($attribute && is_array($this->attributes[$attribute])) {
+            return $this->imageUrl($attribute);
+        } else {
+            parent::__get($name);
+        }
+    }
 }
