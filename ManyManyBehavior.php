@@ -18,6 +18,8 @@ class ManyManyBehavior extends Behavior
      */
     public $attributes;
 
+    private $_set = [];
+
 
     /**
      * @inheritdoc
@@ -35,20 +37,30 @@ class ManyManyBehavior extends Behavior
     }
 
     /**
+     * Get label for attribute
+     * @param string $attribute
+     * @return string
+     */
+    protected function label($attribute)
+    {
+        return isset($this->attributes[$attribute]['label']) ?
+            $this->attributes[$attribute]['label'] : $attribute;
+    }
+
+    /**
      * @param $attribute
      */
     public function validateManyMany($attribute)
     {
-        \ChromePhp::log($attribute);
-        if (is_array($this->_idChannels)) {
-            foreach ($this->_idChannels as $id) {
+        if (is_array($this->_set[$attribute])) {
+            foreach ($this->_set[$attribute] as $id) {
                 if (intval($id) != $id) {
-                    $this->addError('idChannels', 'Items of Channels must be integers.');
+                    $this->addError($attribute, sprintf('Items of %s must be integers.', $this->label($attribute)));
                     break;
                 }
             }
         } elseif (!empty($this->_idChannels)) {
-            $this->addError('idChannels', 'Channels must be an array.');
+            $this->addError($attribute, sprintf('%s must be an array.', $this->label($attribute)));
         }
     }
 
@@ -59,7 +71,7 @@ class ManyManyBehavior extends Behavior
      */
     public function canSetProperty($name, $checkVars = true)
     {
-        return in_array($name, $this->attributes) || parent::canSetProperty($name, $checkVars);
+        return !empty($this->attributes[$name]) || parent::canSetProperty($name, $checkVars);
     }
 
     /**
@@ -67,8 +79,13 @@ class ManyManyBehavior extends Behavior
      */
     public function __set($name, $value)
     {
-        if (in_array($name, $this->attributes)) {
-
+        if (!empty($this->attributes[$name])) {
+            $this->_set[$name] = [];
+            if (!empty($value)) {
+                foreach ($value as $id) {
+                    $this->_set[] = $id;
+                }
+            }
         } else {
             parent::__set($name, $value);
         }
