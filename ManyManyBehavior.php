@@ -16,7 +16,7 @@ class ManyManyBehavior extends Behavior
     /**
      * @var array
      */
-    public $attributes;
+    public $relations;
 
     /**
      * @var array
@@ -41,13 +41,10 @@ class ManyManyBehavior extends Behavior
      */
     public function beforeUpdateModel($event)
     {
-        foreach ($this->attributes as $attribute => $relation) {
-            if (!is_null($this->_set[$attribute])) {
-
-                // Model::deleteAll('id_fk = :id_key', [':id_fk' => $this->owner->id_key]);
-                call_user_func([$relation['class'], 'deleteAll'],
-                    "{$relation['fk']} = :key", [':key' => $this->owner->{$relation['key']}]);
-            }
+        foreach ($this->_set as $attribute) {
+            $relation = $this->relations[$attribute];
+            call_user_func([$relation['class'], 'deleteAll'],
+                "{$relation['fk']} = :key", [':key' => $this->owner->{$relation['key']}]);
         }
     }
 
@@ -56,7 +53,17 @@ class ManyManyBehavior extends Behavior
      */
     public function afterSaveModel($event)
     {
-
+        foreach ($this->_set as $attribute => $keys) {
+            if (!empty($keys)) {
+                $relation = $this->relations[$attribute];
+                foreach ($keys as $id) {
+                    $model = Yii::createObject($relation['class']);
+                    $model->{$relation['fk']} = $this->owner->{$relation['key']};
+                    $model->{$relation['many_fk']}  = $id;
+                    $model->save();
+                }
+            }
+        }
     }
 
     /**
@@ -66,8 +73,8 @@ class ManyManyBehavior extends Behavior
      */
     protected function label($attribute)
     {
-        return isset($this->attributes[$attribute]['label']) ?
-            $this->attributes[$attribute]['label'] : $attribute;
+        return isset($this->relations[$attribute]['label']) ?
+            $this->relations[$attribute]['label'] : $attribute;
     }
 
     /**
@@ -94,7 +101,7 @@ class ManyManyBehavior extends Behavior
      */
     public function canSetProperty($name, $checkVars = true)
     {
-        return !empty($this->attributes[$name]) || parent::canSetProperty($name, $checkVars);
+        return !empty($this->relations[$name]) || parent::canSetProperty($name, $checkVars);
     }
 
     /**
@@ -102,7 +109,7 @@ class ManyManyBehavior extends Behavior
      */
     public function __set($name, $value)
     {
-        if (!empty($this->attributes[$name])) {
+        if (!empty($this->relations[$name])) {
             $this->_set[$name] = [];
             if (!empty($value)) {
                 foreach ($value as $id) {
