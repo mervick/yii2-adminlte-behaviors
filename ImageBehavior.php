@@ -216,9 +216,18 @@ class ImageBehavior extends Behavior
             }
 
             $size = $this->sizeIndex($attribute, $size);
-            $host = preg_replace('~^((?:https?\:)?//)(.*)$~',
-                '\\1' . str_replace('{$domain}', '\\2', $this->domain),
-                Yii::$app->urlManager->hostInfo);
+
+            if (strpos($this->domain, '@') === 0) {
+                $host = Yii::getAlias($this->domain);
+            } else {
+                if (preg_match('~^((?:https?\:)?//)~', $this->domain, $m)) {
+                    $protocol = $m[1];
+                } else {
+                    $protocol = preg_replace('~^((?:https?\:)?//)(.*)$~', '\\1', Yii::$app->urlManager->hostInfo);
+                }
+                $host = $protocol. preg_replace('~^(?:https?\:)?//(.*)$~',
+                    str_replace('{$domain}', '\\1', $this->domain), Yii::$app->urlManager->hostInfo);
+            }
 
             $format = array_merge($this->defaultImagesSettings, $this->attributes[$attribute],
                 $this->attributes[$attribute]['sizes'][$size])['format'];
