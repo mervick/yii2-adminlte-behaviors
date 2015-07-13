@@ -265,7 +265,8 @@ class ImageBehavior extends Behavior
     public function hasMethod($name)
     {
         $attribute = $this->attributeFromGetMethodUrl($name);
-        return ($attribute && is_array($this->attributes[$attribute])) || parent::hasMethod($name);
+        return ($attribute && isset($this->attributes[$attribute]) && is_array($this->attributes[$attribute])) ||
+            parent::hasMethod($name);
     }
 
     /**
@@ -275,7 +276,7 @@ class ImageBehavior extends Behavior
     {
         $attribute = $this->attributeFromGetMethodUrl($name);
 
-        if ($attribute && is_array($this->attributes[$attribute])) {
+        if ($attribute && isset($this->attributes[$attribute]) && is_array($this->attributes[$attribute])) {
             array_unshift($params, $attribute);
             return call_user_func_array([$this, 'imageUrl'], $params);
         } else {
