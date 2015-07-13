@@ -8,6 +8,8 @@ use yii\base\Event;
 use yii\db\BaseActiveRecord;
 use yii\base\Behavior;
 use yii\base\UnknownMethodException;
+use yii\helpers\StringHelper;
+use yii\helpers\Inflector;
 use mervick\image\Image;
 
 
@@ -197,7 +199,7 @@ class ImageBehavior extends Behavior
     protected function schemaTo($path, $attribute, $size)
     {
         return str_replace(['{$path}', '{$model}', '{$attribute}', '{$size}'],
-            [rtrim($path, '/'), array_reverse(explode('\\', $this->owner->className()))[0], $attribute, $size],
+            [rtrim($path, '/'), Inflector::camel2id(StringHelper::basename($this->owner->className())), $attribute, $size],
             $this->schema);
     }
 
