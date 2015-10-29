@@ -292,7 +292,8 @@ class ImageBehavior extends Behavior
     public function canGetProperty($name, $checkVars = true)
     {
         $attribute = $this->attributeFromPropertyUrl($name);
-        return ($attribute && is_array($this->attributes[$attribute])) || parent::canGetProperty($name, $checkVars);
+        return ($attribute && isset($this->attributes[$attribute]) && is_array($this->attributes[$attribute])) ||
+            parent::canGetProperty($name, $checkVars);
     }
 
     /**
@@ -302,7 +303,7 @@ class ImageBehavior extends Behavior
     {
         $attribute = $this->attributeFromPropertyUrl($name);
 
-        if ($attribute && is_array($this->attributes[$attribute])) {
+        if ($attribute && isset($this->attributes[$attribute]) && is_array($this->attributes[$attribute])) {
             return $this->imageUrl($attribute);
         } else {
             return parent::__get($name);
